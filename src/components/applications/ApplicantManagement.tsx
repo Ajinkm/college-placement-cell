@@ -350,9 +350,10 @@ const ApplicantManagement = ({
                               ? "default"
                               : "outline"
                           }
-                          onClick={() =>
-                            handleStatusChange(selectedApplicant.id, "pending")
-                          }
+                          onClick={() => {
+                            handleStatusChange(selectedApplicant.id, "pending");
+                            alert("Status updated to Pending");
+                          }}
                         >
                           Pending
                         </Button>
@@ -363,12 +364,13 @@ const ApplicantManagement = ({
                               ? "default"
                               : "outline"
                           }
-                          onClick={() =>
+                          onClick={() => {
                             handleStatusChange(
                               selectedApplicant.id,
                               "shortlisted",
-                            )
-                          }
+                            );
+                            alert("Applicant shortlisted successfully");
+                          }}
                         >
                           <UserCheck className="mr-1 h-4 w-4" />
                           Shortlist
@@ -380,9 +382,13 @@ const ApplicantManagement = ({
                               ? "destructive"
                               : "outline"
                           }
-                          onClick={() =>
-                            handleStatusChange(selectedApplicant.id, "rejected")
-                          }
+                          onClick={() => {
+                            handleStatusChange(
+                              selectedApplicant.id,
+                              "rejected",
+                            );
+                            alert("Applicant rejected");
+                          }}
                         >
                           <UserX className="mr-1 h-4 w-4" />
                           Reject
@@ -402,7 +408,12 @@ const ApplicantManagement = ({
                         />
                         <Button
                           size="sm"
-                          onClick={handleScheduleInterview}
+                          onClick={() => {
+                            handleScheduleInterview();
+                            if (interviewDate) {
+                              alert("Interview scheduled successfully");
+                            }
+                          }}
                           disabled={!interviewDate}
                         >
                           <Calendar className="mr-1 h-4 w-4" />
@@ -413,7 +424,13 @@ const ApplicantManagement = ({
 
                     <div>
                       <h5 className="text-sm font-medium mb-1">Resume</h5>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          alert("Resume download will be available soon")
+                        }
+                      >
                         <Download className="mr-1 h-4 w-4" />
                         Download Resume
                       </Button>
@@ -427,7 +444,11 @@ const ApplicantManagement = ({
                     className="w-full h-32 p-2 border rounded-md text-sm"
                     placeholder="Add notes about this applicant..."
                   ></textarea>
-                  <Button size="sm" className="mt-2">
+                  <Button
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => alert("Notes saved successfully")}
+                  >
                     Save Notes
                   </Button>
                 </div>
@@ -517,14 +538,20 @@ const ApplicantTable = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onStatusChange(applicant.id, "shortlisted")}
+                  onClick={() => {
+                    onStatusChange(applicant.id, "shortlisted");
+                    alert("Applicant shortlisted successfully");
+                  }}
                 >
                   <UserCheck className="h-4 w-4" />
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onStatusChange(applicant.id, "rejected")}
+                  onClick={() => {
+                    onStatusChange(applicant.id, "rejected");
+                    alert("Applicant rejected");
+                  }}
                 >
                   <UserX className="h-4 w-4" />
                 </Button>

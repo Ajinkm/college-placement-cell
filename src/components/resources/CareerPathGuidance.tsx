@@ -599,7 +599,14 @@ const CareerPathGuidance = () => {
                   Take our comprehensive assessment to identify suitable career
                   options
                 </p>
-                <Button className="w-full">Start Assessment</Button>
+                <Button
+                  className="w-full"
+                  onClick={() =>
+                    alert("Career assessment will be available soon!")
+                  }
+                >
+                  Start Assessment
+                </Button>
               </CardContent>
             </Card>
 
@@ -619,7 +626,13 @@ const CareerPathGuidance = () => {
                     Companies are increasingly seeking professionals with AI and
                     machine learning expertise
                   </p>
-                  <Button variant="link" className="px-0 h-auto text-sm">
+                  <Button
+                    variant="link"
+                    className="px-0 h-auto text-sm"
+                    onClick={() =>
+                      alert("Full article will be available soon!")
+                    }
+                  >
                     Read More
                   </Button>
                 </div>
@@ -632,7 +645,13 @@ const CareerPathGuidance = () => {
                     Global companies are hiring remote talent from India for
                     tech and business roles
                   </p>
-                  <Button variant="link" className="px-0 h-auto text-sm">
+                  <Button
+                    variant="link"
+                    className="px-0 h-auto text-sm"
+                    onClick={() =>
+                      alert("Full article will be available soon!")
+                    }
+                  >
                     Read More
                   </Button>
                 </div>
@@ -656,7 +675,13 @@ const CareerPathGuidance = () => {
                     <p className="text-xs text-muted-foreground">
                       Step-by-step guide to planning your career path
                     </p>
-                    <Button variant="link" className="px-0 py-1 h-auto text-xs">
+                    <Button
+                      variant="link"
+                      className="px-0 py-1 h-auto text-xs"
+                      onClick={() =>
+                        alert("PDF download will be available soon!")
+                      }
+                    >
                       Download PDF
                     </Button>
                   </div>
@@ -673,7 +698,13 @@ const CareerPathGuidance = () => {
                     <p className="text-xs text-muted-foreground">
                       Online courses to build in-demand skills
                     </p>
-                    <Button variant="link" className="px-0 py-1 h-auto text-xs">
+                    <Button
+                      variant="link"
+                      className="px-0 py-1 h-auto text-xs"
+                      onClick={() =>
+                        alert("Course catalog will be available soon!")
+                      }
+                    >
                       Browse Courses
                     </Button>
                   </div>
@@ -688,7 +719,13 @@ const CareerPathGuidance = () => {
                     <p className="text-xs text-muted-foreground">
                       One-on-one guidance from industry experts
                     </p>
-                    <Button variant="link" className="px-0 py-1 h-auto text-xs">
+                    <Button
+                      variant="link"
+                      className="px-0 py-1 h-auto text-xs"
+                      onClick={() =>
+                        alert("Session booking will be available soon!")
+                      }
+                    >
                       Book Session
                     </Button>
                   </div>
@@ -708,7 +745,14 @@ const CareerPathGuidance = () => {
                   <p className="text-sm text-muted-foreground mb-2">
                     June 20, 5:00 PM - 6:30 PM
                   </p>
-                  <Button size="sm">Register</Button>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      alert("Webinar registration will be available soon!")
+                    }
+                  >
+                    Register
+                  </Button>
                 </div>
 
                 <div className="border rounded-md p-4">
@@ -718,7 +762,14 @@ const CareerPathGuidance = () => {
                   <p className="text-sm text-muted-foreground mb-2">
                     June 25, 3:00 PM - 4:00 PM
                   </p>
-                  <Button size="sm">Register</Button>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      alert("Webinar registration will be available soon!")
+                    }
+                  >
+                    Register
+                  </Button>
                 </div>
               </CardContent>
             </Card>

@@ -21,6 +21,7 @@ import {
   Calendar,
   BarChart4,
   Bell,
+  Building,
 } from "lucide-react";
 
 interface DashboardSidebarProps {
@@ -82,10 +83,9 @@ const DashboardSidebar = ({
     ];
 
     const recruiterItems = [
-      { id: "company", label: "Company Profile", icon: <User size={20} /> },
+      { id: "company", label: "Company Profile", icon: <Building size={20} /> },
       { id: "postings", label: "Job Postings", icon: <Briefcase size={20} /> },
       { id: "applicants", label: "Applicants", icon: <FileText size={20} /> },
-      { id: "interviews", label: "Interviews", icon: <Calendar size={20} /> },
     ];
 
     const adminItems = [

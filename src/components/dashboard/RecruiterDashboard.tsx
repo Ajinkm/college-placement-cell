@@ -8,7 +8,6 @@ import DashboardSidebar from "./DashboardSidebar";
 import CompanyProfile from "../profile/CompanyProfile";
 import JobPostingForm from "../jobs/JobPostingForm";
 import ApplicantManagement from "../applications/ApplicantManagement";
-import InterviewScheduler from "./InterviewScheduler";
 
 interface RecruiterDashboardProps {
   userName?: string;
@@ -311,8 +310,6 @@ const RecruiterDashboard = ({
         return <JobPostingForm />;
       case "applicants":
         return <ApplicantManagement />;
-      case "interviews":
-        return <InterviewScheduler />;
       default:
         return (
           <div className="text-center py-12">
