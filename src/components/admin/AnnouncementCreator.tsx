@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   Card,
@@ -35,6 +35,7 @@ interface AnnouncementFormData {
   content: string;
   audience: string;
   priority: string;
+  targetDashboard: string;
   scheduledDate?: string;
 }
 
@@ -46,6 +47,7 @@ const defaultAnnouncements = [
       "Google will be conducting a recruitment drive on campus next week. All eligible students are encouraged to apply.",
     audience: "students",
     priority: "high",
+    targetDashboard: "student",
     createdAt: "2023-05-15T10:00:00Z",
   },
   {
@@ -55,6 +57,7 @@ const defaultAnnouncements = [
       "A resume building workshop will be held in the auditorium on Friday at 3 PM. Bring your laptops!",
     audience: "students",
     priority: "medium",
+    targetDashboard: "student",
     createdAt: "2023-05-10T14:30:00Z",
   },
   {
@@ -64,6 +67,7 @@ const defaultAnnouncements = [
       "We have updated our company registration process. Please review the new guidelines before submitting your profile.",
     audience: "recruiters",
     priority: "medium",
+    targetDashboard: "recruiter",
     createdAt: "2023-05-08T09:15:00Z",
   },
 ];
@@ -71,7 +75,25 @@ const defaultAnnouncements = [
 const AnnouncementCreator = ({ announcements = defaultAnnouncements }) => {
   const [activeTab, setActiveTab] = useState("create");
   const [isScheduled, setIsScheduled] = useState(false);
+  const [displayedAnnouncements, setDisplayedAnnouncements] =
+    useState(announcements);
   const { toast } = useToast();
+
+  // Load announcements from localStorage on component mount
+  useEffect(() => {
+    const storedAnnouncements = localStorage.getItem("announcements");
+    if (storedAnnouncements) {
+      try {
+        const parsedAnnouncements = JSON.parse(storedAnnouncements);
+        setDisplayedAnnouncements([
+          ...parsedAnnouncements,
+          ...defaultAnnouncements,
+        ]);
+      } catch (error) {
+        console.error("Error parsing announcements from localStorage:", error);
+      }
+    }
+  }, []);
 
   const form = useForm<AnnouncementFormData>({
     defaultValues: {
@@ -79,16 +101,39 @@ const AnnouncementCreator = ({ announcements = defaultAnnouncements }) => {
       content: "",
       audience: "all",
       priority: "medium",
+      targetDashboard: "all",
     },
   });
 
   const onSubmit = (data: AnnouncementFormData) => {
-    // In a real implementation, this would send the data to an API
-    console.log("Announcement data:", data);
+    // Create a new announcement object
+    const newAnnouncement = {
+      id: Date.now().toString(),
+      title: data.title,
+      content: data.content,
+      audience: data.audience,
+      priority: data.priority,
+      targetDashboard: data.targetDashboard,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Get existing announcements from localStorage or use an empty array
+    const existingAnnouncements = JSON.parse(
+      localStorage.getItem("announcements") || "[]",
+    );
+
+    // Add the new announcement to the array
+    const updatedAnnouncements = [newAnnouncement, ...existingAnnouncements];
+
+    // Save the updated announcements back to localStorage
+    localStorage.setItem("announcements", JSON.stringify(updatedAnnouncements));
+
+    // Update the displayed announcements
+    setDisplayedAnnouncements([newAnnouncement, ...displayedAnnouncements]);
 
     toast({
       title: "Announcement Created",
-      description: `Your announcement "${data.title}" has been ${isScheduled ? "scheduled" : "published"}.`,
+      description: `Your announcement "${data.title}" has been ${isScheduled ? "scheduled" : "published"} to the ${data.targetDashboard === "all" ? "all dashboards" : data.targetDashboard + " dashboard"}.`,
     });
 
     form.reset();
@@ -170,7 +215,7 @@ const AnnouncementCreator = ({ announcements = defaultAnnouncements }) => {
                     )}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
                       control={form.control}
                       name="audience"
@@ -225,6 +270,44 @@ const AnnouncementCreator = ({ announcements = defaultAnnouncements }) => {
                               <SelectItem value="low">Low</SelectItem>
                               <SelectItem value="medium">Medium</SelectItem>
                               <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="targetDashboard"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Target Dashboard</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select dashboard" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="all">
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4" />
+                                  <span>All Dashboards</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="student">
+                                Student Dashboard
+                              </SelectItem>
+                              <SelectItem value="recruiter">
+                                Recruiter Dashboard
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                Admin Dashboard
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -287,7 +370,7 @@ const AnnouncementCreator = ({ announcements = defaultAnnouncements }) => {
 
             <TabsContent value="manage" className="space-y-4">
               <div className="space-y-4">
-                {announcements.map((announcement) => (
+                {displayedAnnouncements.map((announcement) => (
                   <Card key={announcement.id} className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-2">
@@ -295,11 +378,25 @@ const AnnouncementCreator = ({ announcements = defaultAnnouncements }) => {
                           <h3 className="font-semibold text-lg">
                             {announcement.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Target:{" "}
-                            {announcement.audience.charAt(0).toUpperCase() +
-                              announcement.audience.slice(1)}
-                          </p>
+                          <div className="flex flex-col gap-1">
+                            <p className="text-sm text-muted-foreground">
+                              Audience:{" "}
+                              {announcement.audience.charAt(0).toUpperCase() +
+                                announcement.audience.slice(1)}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Dashboard:{" "}
+                              {announcement.targetDashboard
+                                ? announcement.targetDashboard === "all"
+                                  ? "All Dashboards"
+                                  : announcement.targetDashboard
+                                      .charAt(0)
+                                      .toUpperCase() +
+                                    announcement.targetDashboard.slice(1) +
+                                    " Dashboard"
+                                : "All Dashboards"}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span
@@ -321,7 +418,32 @@ const AnnouncementCreator = ({ announcements = defaultAnnouncements }) => {
                       <Button variant="outline" size="sm">
                         Edit
                       </Button>
-                      <Button variant="destructive" size="sm">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const updatedAnnouncements =
+                            displayedAnnouncements.filter(
+                              (item) => item.id !== announcement.id,
+                            );
+                          setDisplayedAnnouncements(updatedAnnouncements);
+                          localStorage.setItem(
+                            "announcements",
+                            JSON.stringify(
+                              updatedAnnouncements.filter(
+                                (item) =>
+                                  !defaultAnnouncements.some(
+                                    (def) => def.id === item.id,
+                                  ),
+                              ),
+                            ),
+                          );
+                          toast({
+                            title: "Announcement Deleted",
+                            description: `The announcement "${announcement.title}" has been deleted.`,
+                          });
+                        }}
+                      >
                         Delete
                       </Button>
                     </CardFooter>
