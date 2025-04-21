@@ -163,7 +163,7 @@ const AnalyticsDashboard = ({
 
         {/* Tabs for different analytics views */}
         <Tabs defaultValue="placements" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="placements">
               <BarChart className="h-4 w-4 mr-2" />
               Placements
@@ -171,10 +171,6 @@ const AnalyticsDashboard = ({
             <TabsTrigger value="applications">
               <LineChart className="h-4 w-4 mr-2" />
               Applications
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
             </TabsTrigger>
           </TabsList>
 
@@ -189,14 +185,32 @@ const AnalyticsDashboard = ({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <div className="flex items-center justify-center h-full bg-muted/20 rounded-md">
-                    <div className="text-center">
-                      <BarChart className="h-10 w-10 mx-auto text-muted-foreground" />
-                      <p className="mt-2">Placement Trend Chart</p>
-                      <p className="text-xs text-muted-foreground">
-                        Monthly placement data visualization
-                      </p>
-                    </div>
+                  <div className="h-full flex items-end justify-between p-4">
+                    {[
+                      { month: "Jan", value: 65 },
+                      { month: "Feb", value: 72 },
+                      { month: "Mar", value: 84 },
+                      { month: "Apr", value: 78 },
+                      { month: "May", value: 92 },
+                      { month: "Jun", value: 86 },
+                      { month: "Jul", value: 94 },
+                      { month: "Aug", value: 88 },
+                      { month: "Sep", value: 96 },
+                      { month: "Oct", value: 90 },
+                      { month: "Nov", value: 98 },
+                      { month: "Dec", value: 92 },
+                    ].map((item, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                        <div
+                          className="w-8 bg-primary rounded-t-md"
+                          style={{ height: `${item.value * 2}px` }}
+                        ></div>
+                        <span className="text-xs mt-2">{item.month}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -242,16 +256,30 @@ const AnalyticsDashboard = ({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <div className="flex items-center justify-center h-full bg-muted/20 rounded-md">
-                    <div className="text-center">
-                      <PieChart className="h-10 w-10 mx-auto text-muted-foreground" />
-                      <p className="mt-2">Application Status Chart</p>
-                      <p className="text-xs text-muted-foreground">
-                        Pending: {applicationStats.pendingApplications} |
-                        Successful: {applicationStats.successfulApplications} |
-                        Rejected: {applicationStats.rejectedApplications}
-                      </p>
-                    </div>
+                  <div className="h-full flex flex-col justify-center space-y-6 p-4">
+                    {[
+                      { status: "Applied", count: 450, color: "#4338ca" },
+                      { status: "Shortlisted", count: 280, color: "#0891b2" },
+                      { status: "Interviewed", count: 180, color: "#059669" },
+                      { status: "Offered", count: 120, color: "#65a30d" },
+                      { status: "Rejected", count: 150, color: "#dc2626" },
+                    ].map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex justify-between">
+                          <span>{item.status}</span>
+                          <span className="font-medium">{item.count}</span>
+                        </div>
+                        <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${(item.count / 450) * 100}%`,
+                              backgroundColor: item.color,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -263,56 +291,19 @@ const AnalyticsDashboard = ({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <div className="flex items-center justify-center h-full bg-muted/20 rounded-md">
-                    <div className="text-center">
-                      <LineChart className="h-10 w-10 mx-auto text-muted-foreground" />
-                      <p className="mt-2">Monthly Application Trend</p>
-                      <p className="text-xs text-muted-foreground">
-                        Showing application volume for the last 9 months
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Users Tab Content */}
-          <TabsContent value="users" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Distribution</CardTitle>
-                  <CardDescription>Breakdown of user types</CardDescription>
-                </CardHeader>
-                <CardContent className="h-80">
-                  <div className="flex items-center justify-center h-full bg-muted/20 rounded-md">
-                    <div className="text-center">
-                      <PieChart className="h-10 w-10 mx-auto text-muted-foreground" />
-                      <p className="mt-2">User Distribution Chart</p>
-                      <p className="text-xs text-muted-foreground">
-                        Students: {userStats.totalStudents} | Recruiters:{" "}
-                        {userStats.totalRecruiters}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Activity</CardTitle>
-                  <CardDescription>Active users over time</CardDescription>
-                </CardHeader>
-                <CardContent className="h-80">
-                  <div className="flex items-center justify-center h-full bg-muted/20 rounded-md">
-                    <div className="text-center">
-                      <Activity className="h-10 w-10 mx-auto text-muted-foreground" />
-                      <p className="mt-2">User Activity Chart</p>
-                      <p className="text-xs text-muted-foreground">
-                        Active Users: {userStats.activeUsers} | New This Month:{" "}
-                        {userStats.newUsersThisMonth}
-                      </p>
-                    </div>
+                  <div className="h-full flex items-end justify-between p-4">
+                    {applicationStats.applicationsByMonth.map((item, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                        <div
+                          className="w-8 bg-primary rounded-t-md"
+                          style={{ height: `${(item.count / 220) * 250}px` }}
+                        ></div>
+                        <span className="text-xs mt-2">{item.month}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {item.count}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

@@ -57,7 +57,47 @@ interface User {
   createdAt: string;
 }
 
-const UserManagement = ({ users = mockUsers }: { users?: User[] }) => {
+interface UserManagementProps {
+  users?: User[];
+  initialUserRoleToAdd?: "student" | "recruiter" | null;
+  onAddUserComplete?: () => void;
+}
+
+const UserManagement = ({
+  users = mockUsers,
+  initialUserRoleToAdd = null,
+  onAddUserComplete = () => {},
+}: UserManagementProps) => {
+  // Effect to handle initialUserRoleToAdd changes
+  React.useEffect(() => {
+    if (initialUserRoleToAdd) {
+      setNewUserRole(initialUserRoleToAdd);
+      setIsAddUserDialogOpen(true);
+    }
+  }, [initialUserRoleToAdd]);
+
+  // Listen for custom events from sidebar
+  React.useEffect(() => {
+    const handleAddUser = (e: CustomEvent) => {
+      const { role } = e.detail;
+      if (role === "student" || role === "recruiter") {
+        setNewUserRole(role);
+        setIsAddUserDialogOpen(true);
+      }
+    };
+
+    window.addEventListener(
+      "admin-add-user" as any,
+      handleAddUser as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "admin-add-user" as any,
+        handleAddUser as EventListener,
+      );
+    };
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -65,6 +105,9 @@ const UserManagement = ({ users = mockUsers }: { users?: User[] }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [newUserRole, setNewUserRole] = useState<
+    "student" | "recruiter" | "admin"
+  >("student");
 
   // Filter users based on search query and filters
   const filteredUsers = users.filter((user) => {
@@ -104,10 +147,41 @@ const UserManagement = ({ users = mockUsers }: { users?: User[] }) => {
     }
   };
 
-  const handleAddUser = () => {
-    // In a real implementation, this would add a new user to the database
-    console.log("Adding new user");
-    setIsAddUserDialogOpen(false);
+  const handleAddUser = (
+    role: "student" | "recruiter" | "admin" = "student",
+  ) => {
+    // Set the role for the new user and open the dialog
+    setNewUserRole(role);
+    setIsAddUserDialogOpen(true);
+  };
+
+  const createNewUser = async (formData: any) => {
+    try {
+      // In a real implementation, this would create a new user in the database
+      console.log(`Creating new ${newUserRole} with data:`, formData);
+
+      // Create a new user object
+      const newUser = {
+        id: `user-${Date.now()}`,
+        name: formData.name,
+        email: formData.email,
+        role: newUserRole,
+        status: formData.status || "pending",
+        createdAt: new Date().toISOString(),
+      };
+
+      // In a real implementation, this would save to the database
+      // For now, we'll just close the dialog and show an alert
+      alert(`New ${newUserRole} account created successfully!`);
+      setIsAddUserDialogOpen(false);
+      onAddUserComplete();
+
+      return newUser;
+    } catch (error) {
+      console.error(`Error creating new ${newUserRole}:`, error);
+      alert(`Failed to create new ${newUserRole} account. Please try again.`);
+      return null;
+    }
   };
 
   return (
@@ -115,10 +189,16 @@ const UserManagement = ({ users = mockUsers }: { users?: User[] }) => {
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">User Management</h1>
-          <Button onClick={() => setIsAddUserDialogOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
+          <div className="flex space-x-2">
+            <Button onClick={() => handleAddUser("student")}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Student
+            </Button>
+            <Button onClick={() => handleAddUser("recruiter")}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Recruiter
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 md:space-x-4">
@@ -300,9 +380,12 @@ const UserManagement = ({ users = mockUsers }: { users?: User[] }) => {
       <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New User</DialogTitle>
+            <DialogTitle>
+              Add New{" "}
+              {newUserRole.charAt(0).toUpperCase() + newUserRole.slice(1)}
+            </DialogTitle>
             <DialogDescription>
-              Fill in the details to create a new user account.
+              Fill in the details to create a new {newUserRole} account.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -333,24 +416,82 @@ const UserManagement = ({ users = mockUsers }: { users?: User[] }) => {
                 type="email"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label
-                htmlFor="new-role"
-                className="text-right text-sm font-medium"
-              >
-                Role
-              </label>
-              <Select defaultValue="student">
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="recruiter">Recruiter</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
+            {/* Role-specific fields */}
+            {newUserRole === "student" && (
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label
+                    htmlFor="department"
+                    className="text-right text-sm font-medium"
+                  >
+                    Department
+                  </label>
+                  <Select defaultValue="cs">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cs">Computer Science</SelectItem>
+                      <SelectItem value="ee">Electrical Engineering</SelectItem>
+                      <SelectItem value="me">Mechanical Engineering</SelectItem>
+                      <SelectItem value="ce">Civil Engineering</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label
+                    htmlFor="year"
+                    className="text-right text-sm font-medium"
+                  >
+                    Year
+                  </label>
+                  <Select defaultValue="3">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1st Year</SelectItem>
+                      <SelectItem value="2">2nd Year</SelectItem>
+                      <SelectItem value="3">3rd Year</SelectItem>
+                      <SelectItem value="4">4th Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {newUserRole === "recruiter" && (
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label
+                    htmlFor="company"
+                    className="text-right text-sm font-medium"
+                  >
+                    Company
+                  </label>
+                  <Input
+                    id="company"
+                    className="col-span-3"
+                    placeholder="Company name"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label
+                    htmlFor="position"
+                    className="text-right text-sm font-medium"
+                  >
+                    Position
+                  </label>
+                  <Input
+                    id="position"
+                    className="col-span-3"
+                    placeholder="HR Manager"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="grid grid-cols-4 items-center gap-4">
               <label
                 htmlFor="new-status"
@@ -377,7 +518,61 @@ const UserManagement = ({ users = mockUsers }: { users?: User[] }) => {
             >
               Cancel
             </Button>
-            <Button onClick={handleAddUser}>Create User</Button>
+            <Button
+              onClick={() => {
+                // Get form data
+                const nameInput = document.getElementById(
+                  "new-name",
+                ) as HTMLInputElement;
+                const emailInput = document.getElementById(
+                  "new-email",
+                ) as HTMLInputElement;
+
+                // Basic validation
+                if (!nameInput?.value || !emailInput?.value) {
+                  alert("Please fill in all required fields");
+                  return;
+                }
+
+                // Get additional fields based on role
+                let additionalData = {};
+                if (newUserRole === "student") {
+                  const departmentSelect = document.querySelector(
+                    '[placeholder="Select department"]',
+                  ) as HTMLElement;
+                  const yearSelect = document.querySelector(
+                    '[placeholder="Select year"]',
+                  ) as HTMLElement;
+                  additionalData = {
+                    department:
+                      departmentSelect?.textContent || "Computer Science",
+                    year: yearSelect?.textContent || "3rd Year",
+                  };
+                } else if (newUserRole === "recruiter") {
+                  const companyInput = document.getElementById(
+                    "company",
+                  ) as HTMLInputElement;
+                  const positionInput = document.getElementById(
+                    "position",
+                  ) as HTMLInputElement;
+                  additionalData = {
+                    company: companyInput?.value || "",
+                    position: positionInput?.value || "",
+                  };
+                }
+
+                // Create the user
+                createNewUser({
+                  name: nameInput.value,
+                  email: emailInput.value,
+                  status: "pending",
+                  ...additionalData,
+                });
+              }}
+            >
+              Create{" "}
+              {newUserRole.charAt(0).toUpperCase() + newUserRole.slice(1)}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

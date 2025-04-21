@@ -8,6 +8,7 @@ import {
   Mail,
   Phone,
   Download,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,21 +150,97 @@ const ApplicantManagement = ({
     setIsDialogOpen(true);
   };
 
-  const handleStatusChange = (
+  const handleStatusChange = async (
     applicantId: string,
     newStatus: "pending" | "shortlisted" | "rejected" | "interviewed",
   ) => {
-    // In a real implementation, this would update the status in the backend
-    console.log(`Changing status of applicant ${applicantId} to ${newStatus}`);
+    try {
+      // Import necessary functions from supabase-db
+      const { updateApplicationStatus, broadcastToChannel, REALTIME_CHANNELS } =
+        await import("@/lib/supabase-db");
+
+      // In a real implementation, this would update the status in the backend
+      console.log(
+        `Changing status of applicant ${applicantId} to ${newStatus}`,
+      );
+
+      // Try to update the application status in Supabase
+      try {
+        await updateApplicationStatus(applicantId, newStatus);
+
+        // Find the applicant to include in the broadcast
+        const applicant = applicants.find((app) => app.id === applicantId);
+
+        if (applicant) {
+          // Update local state immediately for real-time UI update
+          const updatedApplicants = applicants.map((app) =>
+            app.id === applicantId ? { ...app, status: newStatus } : app,
+          );
+
+          // If there's a selected applicant and it's the one being updated, update it too
+          if (selectedApplicant && selectedApplicant.id === applicantId) {
+            setSelectedApplicant({ ...selectedApplicant, status: newStatus });
+          }
+
+          // Broadcast the status change
+          await broadcastToChannel(
+            REALTIME_CHANNELS.APPLICATIONS,
+            "status-change",
+            {
+              id: applicantId,
+              name: applicant.name,
+              status: newStatus,
+              jobTitle: "Software Engineer", // This would come from the actual job data
+              company: "TechCorp", // This would come from the actual company data
+            },
+          );
+
+          console.log(
+            "Application status updated and broadcasted successfully",
+          );
+        }
+      } catch (dbError) {
+        console.error("Error with database operation:", dbError);
+        // Fallback to local handling if database operation fails
+      }
+    } catch (error) {
+      console.error("Error updating application status:", error);
+    }
   };
 
-  const handleScheduleInterview = () => {
+  const handleScheduleInterview = async () => {
     if (selectedApplicant && interviewDate) {
-      // In a real implementation, this would schedule an interview in the backend
-      console.log(
-        `Scheduling interview for ${selectedApplicant.name} on ${interviewDate}`,
-      );
-      setIsDialogOpen(false);
+      try {
+        // Import necessary functions from supabase-db
+        const { broadcastToChannel, REALTIME_CHANNELS } = await import(
+          "@/lib/supabase-db"
+        );
+
+        // In a real implementation, this would schedule an interview in the backend
+        console.log(
+          `Scheduling interview for ${selectedApplicant.name} on ${interviewDate}`,
+        );
+
+        // Broadcast the interview scheduling
+        await broadcastToChannel(
+          REALTIME_CHANNELS.INTERVIEWS,
+          "new-interview",
+          {
+            id: Date.now().toString(),
+            applicantId: selectedApplicant.id,
+            candidateName: selectedApplicant.name,
+            date: interviewDate.split("T")[0],
+            time: interviewDate.split("T")[1],
+            jobTitle: "Software Engineer", // This would come from the actual job data
+            company: "TechCorp", // This would come from the actual company data
+          },
+        );
+
+        console.log("Interview scheduled and broadcasted successfully");
+        setIsDialogOpen(false);
+      } catch (error) {
+        console.error("Error scheduling interview:", error);
+      }
     }
   };
 
@@ -424,16 +501,38 @@ const ApplicantManagement = ({
 
                     <div>
                       <h5 className="text-sm font-medium mb-1">Resume</h5>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          alert("Resume download will be available soon")
-                        }
-                      >
-                        <Download className="mr-1 h-4 w-4" />
-                        Download Resume
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            alert("Resume download will be available soon")
+                          }
+                        >
+                          <Download className="mr-1 h-4 w-4" />
+                          Download Resume
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            // In a real implementation, this would open the resume in a new tab
+                            if (
+                              selectedApplicant?.resumeUrl &&
+                              selectedApplicant.resumeUrl !== "#"
+                            ) {
+                              window.open(
+                                selectedApplicant.resumeUrl,
+                                "_blank",
+                              );
+                            } else {
+                              alert("Resume not available for viewing");
+                            }
+                          }}
+                        >
+                          <FileText className="mr-1 h-4 w-4" />
+                          View Resume
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

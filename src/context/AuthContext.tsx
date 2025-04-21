@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { login, register } from "@/lib/api";
+import { getUserById } from "@/lib/supabase-db";
 import { supabase } from "@/lib/supabase";
 
 type UserRole = "student" | "recruiter" | "admin";
@@ -51,10 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (error) {
-        // Fall back to mock API if Supabase fails
-        const userData = await login(email, password);
-        setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
+        // If Supabase authentication fails, throw the error
+        throw error;
       } else if (data.user) {
         // Get user profile from Supabase
         const { data: profileData } = await supabase
@@ -110,10 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (error) {
-        // Fall back to mock API if Supabase fails
-        const userData = await register({ name, email, password, role });
-        setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
+        // If Supabase registration fails, throw the error
+        throw error;
       } else if (data.user) {
         // Create profile in Supabase
         await supabase.from("profiles").insert([

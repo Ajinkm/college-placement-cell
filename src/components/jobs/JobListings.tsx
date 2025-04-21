@@ -173,10 +173,26 @@ const JobListings: React.FC<JobListingsProps> = ({
     return matchesSearch && matchesType;
   });
 
-  const handleApply = (jobId: string) => {
+  const handleApply = async (jobId: string) => {
     // Add the job to the user's applications
     const selectedJobData = jobs.find((job) => job.id === jobId);
     if (selectedJobData) {
+      // Import necessary functions from supabase-db
+      const { applyForJob, broadcastToChannel, REALTIME_CHANNELS } =
+        await import("@/lib/supabase-db");
+
+      // Get user from localStorage
+      const userStr = localStorage.getItem("user");
+      let userId = "temp-user-id";
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          userId = user.id;
+        } catch (e) {
+          console.error("Error parsing user:", e);
+        }
+      }
+
       // In a real implementation, this would call an API
       // For now, we'll just store it in localStorage
       const storedApplications = localStorage.getItem("applications");
@@ -214,10 +230,32 @@ const JobListings: React.FC<JobListingsProps> = ({
         status: "pending",
         location: selectedJobData.location,
         description: selectedJobData.description,
+        userId: userId,
+        jobId: jobId,
       };
 
       applications.push(newApplication);
       localStorage.setItem("applications", JSON.stringify(applications));
+
+      try {
+        // Try to use Supabase to apply for the job
+        await applyForJob(jobId, userId);
+
+        // Broadcast the new application to the applications channel
+        await broadcastToChannel(
+          REALTIME_CHANNELS.APPLICATIONS,
+          "new-application",
+          newApplication,
+        );
+
+        console.log(
+          "Application created and broadcasted successfully",
+          newApplication,
+        );
+      } catch (dbError) {
+        console.error("Error with database operation:", dbError);
+        // Fallback is already handled with localStorage
+      }
 
       // Force reload of applications in dashboard
       window.dispatchEvent(new CustomEvent("application-added"));

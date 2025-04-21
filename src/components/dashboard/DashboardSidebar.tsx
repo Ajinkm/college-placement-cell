@@ -90,7 +90,8 @@ const DashboardSidebar = ({
 
     const adminItems = [
       { id: "analytics", label: "Analytics", icon: <BarChart4 size={20} /> },
-      { id: "users", label: "User Management", icon: <User size={20} /> },
+      { id: "students", label: "Students", icon: <User size={20} /> },
+      { id: "recruiters", label: "Recruiters", icon: <Building size={20} /> },
       {
         id: "approvals",
         label: "Job Approvals",

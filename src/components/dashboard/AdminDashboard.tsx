@@ -29,9 +29,20 @@ const AdminDashboard = ({
 }: AdminDashboardProps) => {
   const [currentSection, setCurrentSection] = useState(activeSection);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [userRoleToAdd, setUserRoleToAdd] = useState<
+    "student" | "recruiter" | null
+  >(null);
 
   const handleNavigate = (section: string) => {
     setCurrentSection(section);
+  };
+
+  const handleAddUser = (role: "student" | "recruiter") => {
+    setCurrentSection("users");
+    // Set the role after a small delay to ensure the component is mounted
+    setTimeout(() => {
+      setUserRoleToAdd(role);
+    }, 100);
   };
 
   const handleToggleCollapse = () => {
@@ -44,7 +55,12 @@ const AdminDashboard = ({
       case "analytics":
         return <AnalyticsDashboard />;
       case "users":
-        return <UserManagement />;
+        return (
+          <UserManagement
+            initialUserRoleToAdd={userRoleToAdd}
+            onAddUserComplete={() => setUserRoleToAdd(null)}
+          />
+        );
       case "approvals":
         return <JobApproval />;
       case "announcements":

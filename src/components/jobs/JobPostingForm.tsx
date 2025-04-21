@@ -100,8 +100,45 @@ const JobPostingForm = ({
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Import necessary functions from supabase-db
+      const { createJob, broadcastToChannel, REALTIME_CHANNELS } = await import(
+        "@/lib/supabase-db"
+      );
+
+      // Create job in database
+      const jobData = {
+        title: data.title,
+        company: data.company,
+        location: data.location,
+        type: data.type,
+        category: data.category,
+        experience: data.experience,
+        salary: data.salary,
+        deadline: data.deadline,
+        positions: data.positions,
+        description: data.description,
+        requirements: data.requirements
+          .split("\n")
+          .filter((req) => req.trim() !== ""),
+        benefits: data.benefits,
+        applicationProcess: data.applicationProcess,
+      };
+
+      try {
+        // Try to use Supabase to create the job
+        const newJob = await createJob(jobData);
+
+        // Broadcast the new job to the jobs channel
+        await broadcastToChannel(REALTIME_CHANNELS.JOBS, "new-job", newJob);
+
+        console.log("Job created and broadcasted successfully", newJob);
+      } catch (dbError) {
+        console.error("Error with database operation:", dbError);
+        // Fallback to local handling if database operation fails
+        console.log("Using fallback local handling");
+      }
+
+      // Call the original onSubmit handler
       onSubmit(data);
     } catch (error) {
       console.error("Error submitting form:", error);

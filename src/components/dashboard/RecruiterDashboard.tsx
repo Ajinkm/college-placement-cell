@@ -2,12 +2,20 @@ import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Plus, Users, BarChart2, Calendar } from "lucide-react";
+import {
+  Briefcase,
+  Plus,
+  Users,
+  BarChart2,
+  Calendar,
+  Bell,
+} from "lucide-react";
 
 import DashboardSidebar from "./DashboardSidebar";
 import CompanyProfile from "../profile/CompanyProfile";
 import JobPostingForm from "../jobs/JobPostingForm";
 import ApplicantManagement from "../applications/ApplicantManagement";
+import { REALTIME_CHANNELS, subscribeToChannel } from "@/lib/supabase-db";
 
 interface RecruiterDashboardProps {
   userName?: string;
@@ -41,7 +49,86 @@ const RecruiterDashboard = ({
     if (!hasCompanyProfile && activeSection === "dashboard") {
       setCurrentSection("company");
     }
-  }, []);
+
+    // Subscribe to applications channel for real-time updates
+    const applicationsChannel = subscribeToChannel(
+      REALTIME_CHANNELS.APPLICATIONS,
+      (payload) => {
+        console.log("Application channel event received:", payload);
+        if (payload.event === "new-application") {
+          // Add notification
+          setNotifications((prev) => [
+            {
+              id: Date.now(),
+              type: "application",
+              message: `New application for ${payload.payload.jobTitle} from ${payload.payload.userId}`,
+              time: new Date().toLocaleTimeString(),
+            },
+            ...prev,
+          ]);
+
+          // Update applicant count
+          setDashboardData((prev) => ({
+            ...prev,
+            totalApplicants: prev.totalApplicants + 1,
+            recentApplicants: [
+              {
+                id: payload.payload.id || Date.now().toString(),
+                name: payload.payload.userId || "New Applicant",
+                position: payload.payload.jobTitle || "Unknown Position",
+                appliedDate: new Date().toISOString().split("T")[0],
+              },
+              ...prev.recentApplicants.slice(0, 3),
+            ],
+          }));
+        }
+      },
+    );
+
+    // Subscribe to interviews channel for real-time updates
+    const interviewsChannel = subscribeToChannel(
+      REALTIME_CHANNELS.INTERVIEWS,
+      (payload) => {
+        console.log("Interview channel event received:", payload);
+        if (payload.event === "new-interview") {
+          // Add notification
+          setNotifications((prev) => [
+            {
+              id: Date.now(),
+              type: "interview",
+              message: `Interview scheduled for ${payload.payload.candidateName} on ${payload.payload.date}`,
+              time: new Date().toLocaleTimeString(),
+            },
+            ...prev,
+          ]);
+
+          // Update interview count and upcoming interviews
+          setDashboardData((prev) => ({
+            ...prev,
+            interviewsScheduled: prev.interviewsScheduled + 1,
+            upcomingInterviews: [
+              {
+                id: payload.payload.id || Date.now().toString(),
+                position: payload.payload.jobTitle || "Unknown Position",
+                candidate: payload.payload.candidateName || "Unknown Candidate",
+                date:
+                  payload.payload.date ||
+                  new Date().toISOString().split("T")[0],
+                time: payload.payload.time || "12:00 PM",
+              },
+              ...prev.upcomingInterviews.slice(0, 2),
+            ],
+          }));
+        }
+      },
+    );
+
+    // Cleanup subscriptions
+    return () => {
+      applicationsChannel.unsubscribe();
+      interviewsChannel.unsubscribe();
+    };
+  }, [activeSection]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentSection, setCurrentSection] = useState(activeSection);
 
@@ -58,8 +145,8 @@ const RecruiterDashboard = ({
     }
   };
 
-  // Dashboard summary data
-  const dashboardData = {
+  // Dashboard summary data with state
+  const [dashboardData, setDashboardData] = useState({
     activeJobs: 5,
     totalApplicants: 42,
     interviewsScheduled: 8,
@@ -112,17 +199,37 @@ const RecruiterDashboard = ({
         appliedDate: "2023-07-07",
       },
     ],
-  };
+  });
+
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const renderDashboardContent = () => {
     switch (currentSection) {
       case "dashboard":
         return (
           <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Recruiter Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back to your recruiter dashboard, {userName}.
-            </p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold">Recruiter Dashboard</h1>
+                <p className="text-muted-foreground">
+                  Welcome back to your recruiter dashboard, {userName}.
+                </p>
+              </div>
+              {notifications.length > 0 && (
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="relative"
+                    onClick={() => setNotifications([])}
+                  >
+                    <Bell className="h-5 w-5" />
+                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
